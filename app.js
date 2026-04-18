@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
   res.send("API is running")
 });
 
-sequelize.sync().then(() => {
+sequelize.sync({ alter: true }).then(() => {
   console.log("Database synced");
 });
 
