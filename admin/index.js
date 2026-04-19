@@ -1,58 +1,162 @@
-// admin/index.js
-const AdminJS = require("adminjs"); // .default is required for v7+ in CJS
+const AdminJS = require("adminjs");
 const AdminJSExpress = require("@adminjs/express");
 const AdminJSSequelize = require("@adminjs/sequelize");
 const bcrypt = require("bcrypt");
 
-// Import your models
-const { User, Product, Category, Order, OrderItem, Setting } = require("../models");
+const {
+  User,
+  Product,
+  Category,
+  Order,
+  OrderItem,
+  Setting,
+} = require("../models");
 
-// Register the adapter
+// Register adapter
 AdminJS.registerAdapter(AdminJSSequelize);
 
+// --------------------
+// ADMIN CONFIG
+// --------------------
 const admin = new AdminJS({
+  rootPath: "/admin",
+
   branding: {
-    companyName: "Admin View",
-    theme: {
-      colors: {
-        primary100: "#1e293b",
-        primary80: "#334155",
-      }
-    },
+    companyName: "Orion Company",
     withMadeWithLove: false,
     logo: false,
   },
+
   resources: [
+    // ---------------- USER (ADMIN ONLY)
     {
       resource: User,
       options: {
+        navigation: { name: "Admin", icon: "User" },
+
         properties: {
-          password: { isVisible: false },
+          password: {
+            isVisible: {
+              list: false,
+              filter: false,
+              show: false
+            },
+          },
         },
+
         actions: {
+          new: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+
+            before: async (request) => {
+              if (request.payload.password) {
+                request.payload.password = await bcrypt.hash(
+                  request.payload.password,
+                  10
+                );
+              }
+              return request;
+            },
+          },
+
+          edit: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+
+            before: async (request) => {
+              if (request.payload.password) {
+                request.payload.password = await bcrypt.hash(
+                  request.payload.password,
+                  10
+                );
+              }
+              return request;
+            },
+          },
+
+          delete: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+          },
+
           list: {
-            isAccessible: ({ currentAdmin }) => currentAdmin.role === "admin",
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+          },
+
+          show: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
           },
         },
       },
     },
-    Product,
-    Category,
-    Order,
-    OrderItem,
-    Setting,
-  ],
-  dashboard: {
-    handler: async () => {
-      // Ensure User is defined before calling count
-      const users = User ? await User.count() : 0;
-      return { users };
+
+    // ---------------- PRODUCT (ALL USERS)
+    {
+      resource: Product,
+      options: {
+        navigation: { name: "Shop", icon: "ShoppingCart" },
+      },
     },
-  },
-  rootPath: "/admin",
+
+    // ---------------- CATEGORY
+    {
+      resource: Category,
+      options: {
+        navigation: { name: "Shop", icon: "Category" },
+      },
+    },
+
+    // ---------------- ORDER
+    {
+      resource: Order,
+      options: {
+        navigation: { name: "Orders", icon: "Order" },
+      },
+    },
+
+    // ---------------- ORDER ITEMS
+    {
+      resource: OrderItem,
+      options: {
+        navigation: { name: "Orders", icon: "Order" },
+      },
+    },
+
+    // ---------------- SETTINGS (ADMIN ONLY)
+    {
+      resource: Setting,
+      options: {
+        navigation: { name: "Admin", icon: "Settings" },
+
+        actions: {
+          list: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+          },
+          edit: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+          },
+          new: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+          },
+          delete: {
+            isAccessible: ({ currentAdmin }) =>
+              currentAdmin && currentAdmin.role === "admin",
+          },
+        },
+      },
+    },
+  ],
 });
 
-// Build the authenticated router
+// --------------------
+// AUTH ROUTER
+// --------------------
 const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   admin,
   {
@@ -61,11 +165,14 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
       if (!user) return null;
 
       const isMatch = await bcrypt.compare(password, user.password);
-      if (isMatch && user.role === "admin") {
-        return user;
+
+      if (isMatch) {
+        return user; // 👈 allow BOTH admin + user
       }
+
       return null;
     },
+
     cookiePassword: "supersecret-session-password",
   },
   null,
