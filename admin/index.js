@@ -12,6 +12,16 @@ const {
   Setting,
 } = require("../models");
 
+const path = require("path");
+
+const componentLoader = new AdminJS.ComponentLoader();
+
+const Components = {
+  Dashboard: componentLoader.add(
+    "Dashboard",
+    path.join(__dirname, "./components/Dashboard.jsx")
+  ),
+};
 // Register adapter
 AdminJS.registerAdapter(AdminJSSequelize);
 
@@ -20,6 +30,38 @@ AdminJS.registerAdapter(AdminJSSequelize);
 // --------------------
 const admin = new AdminJS({
   rootPath: "/admin",
+  componentLoader,
+
+  dashboard: {
+    component: Components.Dashboard,
+    handler: async (req, res, context) => {
+      const { currentAdmin } = context;
+
+      console.log("🔥 DASHBOARD HIT");
+
+      if (!currentAdmin) {
+        return { message: "Not logged in" };
+      }
+
+      if (currentAdmin?.role === "admin") {
+        return {
+          role: "admin",
+          users: await User.count(),
+          orders: await Order.count(),
+          products: await Product.count(),
+        };
+      }
+
+      return {
+        role: "user",
+        name: currentAdmin.name,
+        email: currentAdmin.email,
+        myOrders: await Order.count({
+          where: { UserId: currentAdmin.id },
+        }),
+      };
+    },
+  },
 
   branding: {
     companyName: "Orion Company",
@@ -39,7 +81,9 @@ const admin = new AdminJS({
             isVisible: {
               list: false,
               filter: false,
-              show: false
+              show: false,
+              edit: true,
+              new: true
             },
           },
         },
