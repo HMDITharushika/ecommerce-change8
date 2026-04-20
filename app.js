@@ -23,10 +23,12 @@ const startServer = async () => {
 
     await sequelize.sync({ alter: true });
     console.log("Database synced");
-    await seedSettings(); 
+    await seedSettings();
 
-    app.listen(3000, () => {
-      console.log("Server running on 3000 fine");
+    const PORT = process.env.PORT;
+
+    app.listen(PORT, () => {
+      console.log(`Server running on ${PORT}`);
     });
 
   } catch (error) {
