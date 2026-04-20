@@ -6,13 +6,14 @@ const authRoutes = require("./routes/auth");
 const adminRouter = require("./admin");
 const { User } = require("./models");
 const bcrypt = require("bcrypt");
+const seedSettings = require("./seeders/seedSettings");
 
 app.use(express.json());
 app.use("/api", authRoutes);
 app.use("/admin", adminRouter);
 
 app.get("/", (req, res) => {
-  res.send("API is running")
+  res.redirect('/admin')
 });
 
 const startServer = async () => {
@@ -22,6 +23,7 @@ const startServer = async () => {
 
     await sequelize.sync({ alter: true });
     console.log("Database synced");
+    await seedSettings(); 
 
     app.listen(3000, () => {
       console.log("Server running on 3000 fine");

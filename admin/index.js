@@ -3,6 +3,9 @@ const AdminJSExpress = require("@adminjs/express");
 const AdminJSSequelize = require("@adminjs/sequelize");
 const bcrypt = require("bcrypt");
 
+// Register adapter
+AdminJS.registerAdapter(AdminJSSequelize);
+
 const {
   User,
   Product,
@@ -22,8 +25,6 @@ const Components = {
     path.join(__dirname, "./components/Dashboard.jsx")
   ),
 };
-// Register adapter
-AdminJS.registerAdapter(AdminJSSequelize);
 
 // --------------------
 // ADMIN CONFIG
@@ -37,7 +38,7 @@ const admin = new AdminJS({
     handler: async (req, res, context) => {
       const { currentAdmin } = context;
 
-      console.log("🔥 DASHBOARD HIT");
+      console.log("Dashboard is connected");
 
       if (!currentAdmin) {
         return { message: "Not logged in" };
@@ -70,7 +71,7 @@ const admin = new AdminJS({
   },
 
   resources: [
-    // ---------------- USER (ADMIN ONLY)
+    // USER (ADMIN ONLY)
     {
       resource: User,
       options: {
@@ -137,7 +138,7 @@ const admin = new AdminJS({
       },
     },
 
-    // ---------------- PRODUCT (ALL USERS)
+    // PRODUCT (ALL USERS)
     {
       resource: Product,
       options: {
@@ -145,7 +146,7 @@ const admin = new AdminJS({
       },
     },
 
-    // ---------------- CATEGORY
+    // CATEGORY
     {
       resource: Category,
       options: {
@@ -153,7 +154,7 @@ const admin = new AdminJS({
       },
     },
 
-    // ---------------- ORDER
+    // ORDER
     {
       resource: Order,
       options: {
@@ -161,7 +162,7 @@ const admin = new AdminJS({
       },
     },
 
-    // ---------------- ORDER ITEMS
+    // ORDER ITEMS
     {
       resource: OrderItem,
       options: {
@@ -169,7 +170,7 @@ const admin = new AdminJS({
       },
     },
 
-    // ---------------- SETTINGS (ADMIN ONLY)
+    // SETTINGS (ADMIN ONLY)
     {
       resource: Setting,
       options: {
@@ -211,7 +212,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (isMatch) {
-        return user; // 👈 allow BOTH admin + user
+        return user; 
       }
 
       return null;
