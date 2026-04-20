@@ -4,6 +4,8 @@ const app = express();
 const sequelize = require("./config/db");
 const authRoutes = require("./routes/auth");
 const adminRouter = require("./admin");
+const { User } = require("./models");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 app.use("/api", authRoutes);
@@ -13,31 +15,22 @@ app.get("/", (req, res) => {
   res.send("API is running")
 });
 
-sequelize.sync({ alter: true }).then(() => {
-  console.log("Database synced");
-});
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("DB connected");
 
-app.listen(3000, () => {
-  console.log("Server is running fine on 3000");
-});
+    await sequelize.sync({ alter: true });
+    console.log("Database synced");
 
-const bcrypt = require("bcrypt");
-const { User } = require("./models");
-
-(async () => {
-  const existing = await User.findOne({ where: { email: "admin@gmail.com" } });
-
-  if (!existing) {
-    const hashed = await bcrypt.hash("admin123", 10);
-
-    await User.create({
-      name: "Admin",
-      email: "admin@gmail.com",
-      password: hashed,
-      role: "admin",
+    app.listen(3000, () => {
+      console.log("Server running on 3000 fine");
     });
 
-    console.log("✅ Admin user created");
+  } catch (error) {
+    console.error("Startup error", error);
+    process.exit(1);
   }
-})();
+};
 
+startServer();
