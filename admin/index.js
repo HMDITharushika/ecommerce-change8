@@ -26,6 +26,10 @@ const Components = {
   ),
 };
 
+console.log("Checking file:", require("fs").existsSync(
+  path.join(__dirname, "./components/Dashboard.jsx")
+));
+
 // --------------------
 // ADMIN CONFIG
 // --------------------
