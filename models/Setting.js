@@ -9,7 +9,7 @@ const Setting = sequelize.define("Setting", {
   },
 
   value: {
-    type: DataTypes.JSON, // flexible & professional
+    type: DataTypes.STRING,
     allowNull: false,
   },
 
